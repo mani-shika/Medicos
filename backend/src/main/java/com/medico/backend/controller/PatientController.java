@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/patients")
@@ -19,11 +20,30 @@ public class PatientController {
       this.patientService = patientService;
    }
 
-    // Register new patient
+    // Register
    @PostMapping
    public ResponseEntity<Patient> registerPatient(@RequestBody PatientRequest request) {
       Patient patient = patientService.registerPatient(request);
       return new ResponseEntity<>(patient, HttpStatus.CREATED);
+   }
+
+    // Login
+   @PostMapping("/login")
+   public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+      try {
+            Patient patient = patientService.loginPatient(
+                  credentials.get("email"),
+                  credentials.get("password")
+            );
+            return ResponseEntity.ok(Map.of(
+                  "id", patient.getId(),
+                  "name", patient.getName(),
+                  "email", patient.getEmail()
+            ));
+      } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                  .body(Map.of("message", e.getMessage()));
+      }
    }
 
     // Get all patients

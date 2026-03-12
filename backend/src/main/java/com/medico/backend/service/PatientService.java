@@ -4,6 +4,7 @@ import com.medico.backend.dto.PatientRequest;
 import com.medico.backend.exception.ResourceNotFoundException;
 import com.medico.backend.model.Patient;
 import com.medico.backend.repository.PatientRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,12 +13,19 @@ import java.util.List;
 public class PatientService {
 
    private final PatientRepository repository;
+   final PasswordEncoder passwordEncoder;
 
-   public PatientService(PatientRepository repository) {
+   public PatientService(PatientRepository repository, PasswordEncoder passwordEncoder) {
       this.repository = repository;
+      this.passwordEncoder = passwordEncoder;
    }
+
     // Register new patient
    public Patient registerPatient(PatientRequest request) {
+        // Check if email already exists
+      if (repository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already registered!");
+      }
       Patient patient = new Patient(
                request.getName(),
                request.getEmail(),
@@ -26,7 +34,20 @@ public class PatientService {
                request.getAge(),
                request.getGender()
       );
+        // Encrypt password before saving
+      patient.setPassword(passwordEncoder.encode(request.getPassword()));
       return repository.save(patient);
+   }
+
+    // Login patient
+   public Patient loginPatient(String email, String password) {
+      Patient patient = repository.findByEmail(email)
+               .orElseThrow(() -> new RuntimeException("Patient not found!"));
+
+      if (!passwordEncoder.matches(password, patient.getPassword())) {
+            throw new RuntimeException("Invalid password!");
+      }
+      return patient;
    }
 
     // Get all patients
