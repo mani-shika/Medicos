@@ -20,41 +20,60 @@ public class DoctorAvailabilityService {
       this.doctorRepository = doctorRepository;
    }
 
-    // Add availability slot
-   public DoctorAvailability addAvailability(Long doctorId, String date, String time) {
+    // Add a single slot
+   public DoctorAvailability addSlot(Long doctorId, String dayOfWeek, String slotTime) {
+
         // Check if slot already exists
       boolean exists = availabilityRepository
-               .existsByDoctor_IdAndDateAndTime(doctorId, date, time);
+               .existsByDoctorIdAndDayOfWeekAndSlotTime(doctorId, dayOfWeek, slotTime);
 
       if (exists) {
-            throw new RuntimeException("Slot already exists for this doctor at " + date + " " + time);
+            throw new RuntimeException("Slot already exists for " + dayOfWeek + " at " + slotTime);
       }
 
       Doctor doctor = doctorRepository.findById(doctorId)
                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
 
-      DoctorAvailability availability = new DoctorAvailability(doctor, date, time, true);
-      return availabilityRepository.save(availability);
+      DoctorAvailability slot = new DoctorAvailability(doctor, dayOfWeek, slotTime, true);
+      return availabilityRepository.save(slot);
    }
 
-    // Get available slots for a doctor on a date
-   public List<DoctorAvailability> getAvailableSlots(Long doctorId, String date) {
-      return availabilityRepository
-               .findByDoctor_IdAndDateAndAvailableTrue(doctorId, date);
+    // Get ALL slots for a doctor (free + booked)
+   public List<DoctorAvailability> getAllSlots(Long doctorId) {
+      return availabilityRepository.findByDoctorId(doctorId);
    }
 
-    // Mark a slot as booked
-   public void markSlotBooked(Long doctorId, String date, String time) {
-      List<DoctorAvailability> slots = availabilityRepository
-               .findByDoctor_IdAndDateAndAvailableTrue(doctorId, date);
+    // Get only AVAILABLE slots for a doctor
+   public List<DoctorAvailability> getAvailableSlots(Long doctorId) {
+      return availabilityRepository.findByDoctorIdAndAvailableTrue(doctorId);
+   }
 
-      for (DoctorAvailability slot : slots) {
-            if (slot.getTime().equals(time)) {
-               slot.setAvailable(false);
-               availabilityRepository.save(slot);
-               return;
-            }
-         }
-      throw new RuntimeException("Slot not found for " + date + " at " + time);
+    // Get slots for a doctor on a specific day
+   public List<DoctorAvailability> getSlotsByDay(Long doctorId, String dayOfWeek) {
+      return availabilityRepository.findByDoctorIdAndDayOfWeek(doctorId, dayOfWeek);
+   }
+
+    // Delete a slot by slot ID
+   public void deleteSlot(Long slotId) {
+      if (!availabilityRepository.existsById(slotId)) {
+            throw new RuntimeException("Slot not found with id: " + slotId);
+      }
+      availabilityRepository.deleteById(slotId);
+   }
+
+    // Mark slot as BOOKED
+   public void markSlotBooked(Long slotId) {
+      DoctorAvailability slot = availabilityRepository.findById(slotId)
+               .orElseThrow(() -> new RuntimeException("Slot not found with id: " + slotId));
+      slot.setAvailable(false);
+      availabilityRepository.save(slot);
+   }
+
+    // Mark slot as AVAILABLE again (when appointment cancelled)
+   public void markSlotAvailable(Long slotId) {
+      DoctorAvailability slot = availabilityRepository.findById(slotId)
+               .orElseThrow(() -> new RuntimeException("Slot not found with id: " + slotId));
+      slot.setAvailable(true);
+      availabilityRepository.save(slot);
    }
 }

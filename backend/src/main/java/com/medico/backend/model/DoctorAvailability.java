@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "doctor_availability",
       uniqueConstraints = {
-            @UniqueConstraint(columnNames = {"doctor_id", "date", "time"})
+            @UniqueConstraint(columnNames = {"doctor_id", "day_of_week", "slot_time"})
       })
 public class DoctorAvailability {
 
@@ -17,36 +17,36 @@ public class DoctorAvailability {
       @JoinColumn(name = "doctor_id", nullable = false)
       private Doctor doctor;
 
-      @Column(nullable = false)
-      private String date;
+      @Column(name = "day_of_week", nullable = false)
+      private String dayOfWeek;   // e.g. "Monday"
 
-      @Column(nullable = false)
-      private String time;
+      @Column(name = "slot_time", nullable = false)
+      private String slotTime;    // e.g. "09:00"
 
       @Column(nullable = false)
       private boolean available;
 
-    // Constructors
+      // Constructors
       public DoctorAvailability() {}
 
-      public DoctorAvailability(Doctor doctor, String date, String time, boolean available) {
+      public DoctorAvailability(Doctor doctor, String dayOfWeek, String slotTime, boolean available) {
             this.doctor = doctor;
-            this.date = date;
-            this.time = time;
+            this.dayOfWeek = dayOfWeek;
+            this.slotTime = slotTime;
             this.available = available;
       }
 
-    // Getters
+      // Getters
       public Long getId() { return id; }
       public Doctor getDoctor() { return doctor; }
-      public String getDate() { return date; }
-      public String getTime() { return time; }
+      public String getDayOfWeek() { return dayOfWeek; }
+      public String getSlotTime() { return slotTime; }
       public boolean isAvailable() { return available; }
 
-    // Setters
+      // Setters
       public void setId(Long id) { this.id = id; }
       public void setDoctor(Doctor doctor) { this.doctor = doctor; }
-      public void setDate(String date) { this.date = date; }
-      public void setTime(String time) { this.time = time; }
+      public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
+      public void setSlotTime(String slotTime) { this.slotTime = slotTime; }
       public void setAvailable(boolean available) { this.available = available; }
 }
